@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "120b33ad4e03351a79e9a35ac719248d"
+client_id = "c0d9d37606283bda0d02d8febb885195"
 name = "sticky-cart"
 application_url = "https://example.com"
 embedded = true
@@ -11,14 +11,6 @@ include_config_on_deploy = true
 
 [webhooks]
 api_version = "2026-01"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes

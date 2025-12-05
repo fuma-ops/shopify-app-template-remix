@@ -1,0 +1,80 @@
+{% if product %}
+  <div id="sticky-cart-bar" class="sticky-hide">
+    <div class="sticky-container">
+      <!-- Product Image & Title -->
+      <div class="sticky-info">
+        {% if product.featured_image %}
+          <img src="{{ product.featured_image | img_url: 'tiny' }}" alt="{{ product.title }}" class="sticky-img">
+        {% endif %}
+        <span class="sticky-title">{{ product.title }}</span>
+      </div>
+
+      <!-- Price & Add Button -->
+      <div class="sticky-actions">
+        <span class="sticky-price">{{ product.price | money }}</span>
+        <form method="post" action="/cart/add" class="sticky-form">
+          <input type="hidden" name="id" value="{{ product.variants.first.id }}">
+          <button type="submit" class="sticky-btn" style="background-color: {{ block.settings.btn_color }}">
+            Add to Cart
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    #sticky-cart-bar {
+      position: fixed; bottom: 0; left: 0; width: 100%;
+      background: white; border-top: 1px solid #e5e5e5;
+      padding: 10px 20px; z-index: 9999;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+      transition: transform 0.3s ease;
+    }
+    .sticky-hide { transform: translateY(100%); } /* Hidden by default */
+    .sticky-show { transform: translateY(0); }    /* Visible */
+    
+    .sticky-container {
+      display: flex; justify-content: space-between; alignItems: center;
+      max-width: 1200px; margin: 0 auto;
+    }
+    .sticky-info { display: flex; align-items: center; gap: 10px; }
+    .sticky-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
+    .sticky-title { font-weight: bold; font-size: 14px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    
+    .sticky-actions { display: flex; align-items: center; gap: 15px; }
+    .sticky-price { font-weight: bold; color: #333; }
+    .sticky-btn {
+      color: white; border: none; padding: 10px 20px;
+      border-radius: 5px; cursor: pointer; font-weight: bold;
+    }
+    
+    /* Mobile optimization */
+    @media (max-width: 600px) {
+      .sticky-title { display: none; } /* Hide title on small screens */
+    }
+  </style>
+
+  <script>
+    document.addEventListener("scroll", function() {
+      var bar = document.getElementById("sticky-cart-bar");
+      // Show bar if user scrolls down more than 300px
+      if (window.scrollY > 300) {
+        bar.classList.remove("sticky-hide");
+        bar.classList.add("sticky-show");
+      } else {
+        bar.classList.add("sticky-hide");
+        bar.classList.remove("sticky-show");
+      }
+    });
+  </script>
+{% endif %}
+
+{% schema %}
+{
+  "name": "Sticky Cart",
+  "target": "body",
+  "settings": [
+    { "type": "color", "id": "btn_color", "label": "Button Color", "default": "#000000" }
+  ]
+}
+{% endschema %}
