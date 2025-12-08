@@ -1,3 +1,5 @@
+import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -11,8 +13,23 @@ import {
   Banner,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
+import { authenticate } from "../shopify.server";
+
+// 1. The Loader MUST be outside the component
+// This gets the current shop URL (e.g., zsolutions-billing-clean.myshopify.com)
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { session } = await authenticate.admin(request);
+  return json({ shop: session.shop });
+};
 
 export default function Index() {
+  // 2. Get the shop data from the loader
+  const { shop } = useLoaderData<typeof loader>();
+
+  // 3. Create the dynamic URL
+  // This URL works for ANY store. It redirects to the Theme Editor -> App Embeds tab.
+  const themeEditorUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
+
   return (
     <Page>
       <TitleBar title="Sticky Cart Dashboard" />
@@ -38,9 +55,11 @@ export default function Index() {
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">Quick Actions</Text>
                   <InlineStack gap="300">
+                    {/* 4. Use the dynamic URL here */}
                     <Button
-                      onClick={() => window.open('https://admin.shopify.com/store/zsolutions-test-1/themes/current/editor?context=apps', '_blank')}
                       variant="primary"
+                      url={themeEditorUrl}
+                      target="_blank"
                     >
                       Open Theme Editor (Customize Color)
                     </Button>
@@ -67,7 +86,6 @@ export default function Index() {
                     Upgrade to Pro to remove branding and unlock analytics.
                   </Text>
                   
-                  {/* 👇 FIXED BUTTON IS HERE */}
                   <Button 
                     url="/app/upgrade" 
                     fullWidth 
