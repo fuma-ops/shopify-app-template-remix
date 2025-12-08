@@ -11,6 +11,7 @@ import {
   Link,
   InlineStack,
   Banner,
+  Grid,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate, MONTHLY_PLAN } from "../shopify.server";
@@ -36,12 +37,51 @@ export default function Index() {
     <Page>
       <TitleBar title="Sticky Cart Dashboard" />
       <BlockStack gap="500">
+        
+        {/* PRO Banner */}
         {isPro && (
           <Banner tone="info">
             <Text as="p" fontWeight="bold">🎉 Thank you for supporting us! You are on the PRO Plan.</Text>
           </Banner>
         )}
+
+        {/* ANALYTICS SECTION (Only for PRO) */}
+        {isPro && (
+          <Card>
+             <BlockStack gap="400">
+                <Text as="h2" variant="headingMd">🚀 Pro Analytics (Last 30 Days)</Text>
+                <Grid>
+                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
+                       <Card background="bg-surface-secondary">
+                          <Text as="h3" variant="headingSm" tone="subdued">Total Views</Text>
+                          <Text as="p" variant="headingxl">1,234</Text>
+                       </Card>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
+                       <Card background="bg-surface-secondary">
+                          <Text as="h3" variant="headingSm" tone="subdued">Clicks</Text>
+                          <Text as="p" variant="headingxl">856</Text>
+                       </Card>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
+                       <Card background="bg-surface-secondary">
+                          <Text as="h3" variant="headingSm" tone="subdued">CTR</Text>
+                          <Text as="p" variant="headingxl" tone="success">69%</Text>
+                       </Card>
+                    </Grid.Cell>
+                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
+                       <Card background="bg-surface-secondary">
+                          <Text as="h3" variant="headingSm" tone="subdued">Conversions</Text>
+                          <Text as="p" variant="headingxl">142</Text>
+                       </Card>
+                    </Grid.Cell>
+                </Grid>
+             </BlockStack>
+          </Card>
+        )}
+
         <Layout>
+          {/* Main App Controls */}
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -61,6 +101,8 @@ export default function Index() {
               </BlockStack>
             </Card>
           </Layout.Section>
+
+          {/* Sidebar */}
           <Layout.Section variant="oneThird">
             <BlockStack gap="500">
               <Card>
@@ -76,7 +118,7 @@ export default function Index() {
                       <div style={{background: '#e3f2fd', padding: '10px', borderRadius: '5px', color: '#0d47a1', fontWeight: 'bold', textAlign: 'center'}}>
                         FREE TIER
                       </div>
-                      <Text as="p" variant="bodySm">Upgrade to remove branding.</Text>
+                      <Text as="p" variant="bodySm">Upgrade to remove branding & see analytics.</Text>
                       <Button url="/app/upgrade" fullWidth variant="primary" tone="critical">Upgrade to Pro ($4.99/mo)</Button>
                     </>
                   )}

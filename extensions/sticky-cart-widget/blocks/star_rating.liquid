@@ -24,6 +24,12 @@
       {% if product %}
         <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
       {% endif %}
+
+      <!-- 👇 THIS IS THE NEW MAGIC FOR "BUY NOW" -->
+      {% if block.settings.btn_action == 'checkout' %}
+        <input type="hidden" name="return_to" value="/checkout">
+      {% endif %}
+
       <button type="submit" class="sticky-btn">
         {{ block.settings.button_text }}
       </button>
@@ -31,7 +37,7 @@
   </div>
 </div>
 
-<!-- 2. CSS Styles with Pattern Logic -->
+<!-- 2. CSS Styles -->
 <style>
   .sticky-card-container {
     position: fixed;
@@ -43,18 +49,11 @@
     box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
     border-top: 1px solid rgba(255,255,255,0.2);
 
-    /* 1. Default Color */
+    /* Background Logic */
     background-color: {{ block.settings.background_color }};
 
-    /* 2. Theme Logic */
     {% if block.settings.bg_theme == 'christmas' %}
-      background: repeating-linear-gradient(
-        45deg,
-        #cc0000,
-        #cc0000 10px,
-        #006400 10px,
-        #006400 20px
-      );
+      background: repeating-linear-gradient(45deg, #cc0000, #cc0000 10px, #006400 10px, #006400 20px);
     {% elsif block.settings.bg_theme == 'love' %}
       background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
     {% elsif block.settings.bg_theme == 'midnight' %}
@@ -65,7 +64,6 @@
       background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
     {% endif %}
 
-    /* 3. Custom Image Override */
     {% if block.settings.bg_image != blank %}
       background-image: url('{{ block.settings.bg_image | image_url: width: 2000 }}');
       background-size: cover;
@@ -79,8 +77,6 @@
     align-items: center;
     max-width: 1200px;
     margin: 0 auto;
-    
-    /* If background is dark/complex, add a slight white backing to text for readability? Optional */
   }
 
   .sticky-product-info {
@@ -104,7 +100,6 @@
     line-height: 1.2;
   }
 
-  /* Dynamic Text Shadow for readability on patterns */
   .sticky-title {
     font-weight: bold;
     font-size: 14px;
@@ -123,7 +118,7 @@
     color: {{ block.settings.button_text_color }};
     padding: 12px 24px;
     border: none;
-    border-radius: 50px; /* Rounded pill shape looks modern */
+    border-radius: 50px;
     cursor: pointer;
     font-weight: bold;
     font-size: 14px;
@@ -137,12 +132,26 @@
   }
 </style>
 
-<!-- 3. Settings Schema -->
+<!-- 3. Schema -->
 {% schema %}
 {
   "name": "Sticky Add To Cart",
   "target": "body",
   "settings": [
+    {
+      "type": "header",
+      "content": "⚡ Button Function"
+    },
+    {
+      "type": "select",
+      "id": "btn_action",
+      "label": "Button Action",
+      "options": [
+        { "value": "cart", "label": "Add to Cart (Standard)" },
+        { "value": "checkout", "label": "Buy Now (Skip Cart) 🚀" }
+      ],
+      "default": "cart"
+    },
     {
       "type": "header",
       "content": "🎨 Background Design"
@@ -165,8 +174,7 @@
       "type": "color",
       "id": "background_color",
       "label": "Solid Background Color",
-      "default": "#ffffff",
-      "info": "Only used if Theme is set to 'Solid Color'"
+      "default": "#ffffff"
     },
     {
       "type": "image_picker",
