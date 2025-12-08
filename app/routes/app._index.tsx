@@ -1,20 +1,9 @@
 import { type LoaderFunctionArgs, json } from "@remix-run/node";
 import { useLoaderData } from "@remix-run/react";
-import {
-  Page,
-  Layout,
-  Text,
-  Card,
-  Button,
-  BlockStack,
-  List,
-  Link,
-  InlineStack,
-  Banner,
-  Grid,
-} from "@shopify/polaris";
+import { Page, Layout, Text, Card, Button, BlockStack, List, Link, InlineStack, Banner, Grid } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate, MONTHLY_PLAN } from "../shopify.server";
+import prisma from "../db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, billing } = await authenticate.admin(request);
@@ -23,39 +12,42 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     isTest: true,
   });
 
+  // Get Real Counts from Database
+  const views = await prisma.analytics.count({ where: { shop: session.shop, event: "view" } });
+  const clicks = await prisma.analytics.count({ where: { shop: session.shop, event: "click" } });
+  const ctr = views > 0 ? ((clicks / views) * 100).toFixed(1) : "0";
+
   return json({ 
     shop: session.shop,
-    isPro: billingCheck.hasActivePayment 
+    isPro: billingCheck.hasActivePayment,
+    stats: { views, clicks, ctr }
   });
 };
 
 export default function Index() {
-  const { shop, isPro } = useLoaderData<typeof loader>();
+  const { shop, isPro, stats } = useLoaderData<typeof loader>();
   const themeEditorUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
 
   return (
     <Page>
       <TitleBar title="Sticky Cart Dashboard" />
       <BlockStack gap="500">
-        
-        {/* PRO Banner */}
         {isPro && (
           <Banner tone="info">
             <Text as="p" fontWeight="bold">🎉 Thank you for supporting us! You are on the PRO Plan.</Text>
           </Banner>
         )}
-
-        {/* ANALYTICS SECTION - Fixed Typo */}
         {isPro && (
           <Card>
              <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">🚀 Pro Analytics (Last 30 Days)</Text>
+                <Text as="h2" variant="headingMd">🚀 Pro Analytics (Real Data)</Text>
                 <Grid>
                     <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
                        <Card background="bg-surface-secondary">
                           <BlockStack gap="200">
                             <Text as="h3" variant="headingSm" tone="subdued">Total Views</Text>
-                            <Text as="p" variant="headingXl">1,234</Text>
+                            {/* 👇 REAL VARIABLE HERE */}
+                            <Text as="p" variant="headingXl">{stats.views}</Text>
                           </BlockStack>
                        </Card>
                     </Grid.Cell>
@@ -63,7 +55,8 @@ export default function Index() {
                        <Card background="bg-surface-secondary">
                           <BlockStack gap="200">
                             <Text as="h3" variant="headingSm" tone="subdued">Clicks</Text>
-                            <Text as="p" variant="headingXl">856</Text>
+                            {/* �� REAL VARIABLE HERE */}
+                            <Text as="p" variant="headingXl">{stats.clicks}</Text>
                           </BlockStack>
                        </Card>
                     </Grid.Cell>
@@ -71,15 +64,8 @@ export default function Index() {
                        <Card background="bg-surface-secondary">
                           <BlockStack gap="200">
                             <Text as="h3" variant="headingSm" tone="subdued">CTR</Text>
-                            <Text as="p" variant="headingXl" tone="success">69%</Text>
-                          </BlockStack>
-                       </Card>
-                    </Grid.Cell>
-                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
-                       <Card background="bg-surface-secondary">
-                          <BlockStack gap="200">
-                            <Text as="h3" variant="headingSm" tone="subdued">Conversions</Text>
-                            <Text as="p" variant="headingXl">142</Text>
+                            {/* 👇 REAL VARIABLE HERE */}
+                            <Text as="p" variant="headingXl" tone="success">{stats.ctr}%</Text>
                           </BlockStack>
                        </Card>
                     </Grid.Cell>
@@ -87,9 +73,7 @@ export default function Index() {
              </BlockStack>
           </Card>
         )}
-
         <Layout>
-          {/* Main App Controls */}
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -109,8 +93,6 @@ export default function Index() {
               </BlockStack>
             </Card>
           </Layout.Section>
-
-          {/* Sidebar */}
           <Layout.Section variant="oneThird">
             <BlockStack gap="500">
               <Card>
@@ -126,19 +108,10 @@ export default function Index() {
                       <div style={{background: '#e3f2fd', padding: '10px', borderRadius: '5px', color: '#0d47a1', fontWeight: 'bold', textAlign: 'center'}}>
                         FREE TIER
                       </div>
-                      <Text as="p" variant="bodySm">Upgrade to remove branding & see analytics.</Text>
+                      <Text as="p" variant="bodySm">Upgrade to remove branding.</Text>
                       <Button url="/app/upgrade" fullWidth variant="primary" tone="critical">Upgrade to Pro ($4.99/mo)</Button>
                     </>
                   )}
-                </BlockStack>
-              </Card>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">Need Help?</Text>
-                  <List>
-                    <List.Item><Link url="mailto:support@zsolutions.ma">Contact Support</Link></List.Item>
-                    <List.Item><Link url="#">Read Setup Guide</Link></List.Item>
-                  </List>
                 </BlockStack>
               </Card>
             </BlockStack>
