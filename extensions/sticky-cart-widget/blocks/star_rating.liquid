@@ -1,80 +1,206 @@
-{% if product %}
-  <div id="sticky-cart-bar" class="sticky-hide">
-    <div class="sticky-container">
-      <!-- Product Image & Title -->
-      <div class="sticky-info">
-        {% if product.featured_image %}
-          <img src="{{ product.featured_image | img_url: 'tiny' }}" alt="{{ product.title }}" class="sticky-img">
+<!-- 1. HTML Structure -->
+<div class="sticky-card-container">
+  <div class="sticky-content">
+    
+    <!-- Left Side: Image + Title + Price -->
+    <div class="sticky-product-info">
+      {% if product.featured_image %}
+        <img src="{{ product.featured_image | image_url: width: 100 }}" alt="{{ product.title }}" class="sticky-image">
+      {% endif %}
+      
+      <div class="sticky-text-group">
+        {% if product %}
+          <span class="sticky-title">{{ product.title }}</span>
+          <span class="sticky-price">{{ product.price | money }}</span>
+        {% else %}
+          <span class="sticky-title">Example Product Title</span>
+          <span class="sticky-price">$99.99</span>
         {% endif %}
-        <span class="sticky-title">{{ product.title }}</span>
-      </div>
-
-      <!-- Price & Add Button -->
-      <div class="sticky-actions">
-        <span class="sticky-price">{{ product.price | money }}</span>
-        <form method="post" action="/cart/add" class="sticky-form">
-          <input type="hidden" name="id" value="{{ product.variants.first.id }}">
-          <button type="submit" class="sticky-btn" style="background-color: {{ block.settings.btn_color }}">
-            Add to Cart
-          </button>
-        </form>
       </div>
     </div>
+    
+    <!-- Right Side: Button -->
+    <form method="post" action="/cart/add">
+      {% if product %}
+        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+      {% endif %}
+      <button type="submit" class="sticky-btn">
+        {{ block.settings.button_text }}
+      </button>
+    </form>
   </div>
+</div>
 
-  <style>
-    #sticky-cart-bar {
-      position: fixed; bottom: 0; left: 0; width: 100%;
-      background: white; border-top: 1px solid #e5e5e5;
-      padding: 10px 20px; z-index: 9999;
-      box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
-      transition: transform 0.3s ease;
-    }
-    .sticky-hide { transform: translateY(100%); } /* Hidden by default */
-    .sticky-show { transform: translateY(0); }    /* Visible */
-    
-    .sticky-container {
-      display: flex; justify-content: space-between; alignItems: center;
-      max-width: 1200px; margin: 0 auto;
-    }
-    .sticky-info { display: flex; align-items: center; gap: 10px; }
-    .sticky-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-    .sticky-title { font-weight: bold; font-size: 14px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    
-    .sticky-actions { display: flex; align-items: center; gap: 15px; }
-    .sticky-price { font-weight: bold; color: #333; }
-    .sticky-btn {
-      color: white; border: none; padding: 10px 20px;
-      border-radius: 5px; cursor: pointer; font-weight: bold;
-    }
-    
-    /* Mobile optimization */
-    @media (max-width: 600px) {
-      .sticky-title { display: none; } /* Hide title on small screens */
-    }
-  </style>
+<!-- 2. CSS Styles with Pattern Logic -->
+<style>
+  .sticky-card-container {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 9999;
+    padding: 12px 24px;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+    border-top: 1px solid rgba(255,255,255,0.2);
 
-  <script>
-    document.addEventListener("scroll", function() {
-      var bar = document.getElementById("sticky-cart-bar");
-      // Show bar if user scrolls down more than 300px
-      if (window.scrollY > 300) {
-        bar.classList.remove("sticky-hide");
-        bar.classList.add("sticky-show");
-      } else {
-        bar.classList.add("sticky-hide");
-        bar.classList.remove("sticky-show");
-      }
-    });
-  </script>
-{% endif %}
+    /* 1. Default Color */
+    background-color: {{ block.settings.background_color }};
 
+    /* 2. Theme Logic */
+    {% if block.settings.bg_theme == 'christmas' %}
+      background: repeating-linear-gradient(
+        45deg,
+        #cc0000,
+        #cc0000 10px,
+        #006400 10px,
+        #006400 20px
+      );
+    {% elsif block.settings.bg_theme == 'love' %}
+      background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+    {% elsif block.settings.bg_theme == 'midnight' %}
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    {% elsif block.settings.bg_theme == 'rainbow' %}
+      background: linear-gradient(90deg, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee);
+    {% elsif block.settings.bg_theme == 'ocean' %}
+      background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+    {% endif %}
+
+    /* 3. Custom Image Override */
+    {% if block.settings.bg_image != blank %}
+      background-image: url('{{ block.settings.bg_image | image_url: width: 2000 }}');
+      background-size: cover;
+      background-position: center;
+    {% endif %}
+  }
+
+  .sticky-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    
+    /* If background is dark/complex, add a slight white backing to text for readability? Optional */
+  }
+
+  .sticky-product-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .sticky-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  .sticky-text-group {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  /* Dynamic Text Shadow for readability on patterns */
+  .sticky-title {
+    font-weight: bold;
+    font-size: 14px;
+    color: {{ block.settings.text_color }};
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+  }
+
+  .sticky-price {
+    font-size: 14px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.9;
+  }
+
+  .sticky-btn {
+    background-color: {{ block.settings.button_color }};
+    color: {{ block.settings.button_text_color }};
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px; /* Rounded pill shape looks modern */
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 14px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .sticky-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+  }
+</style>
+
+<!-- 3. Settings Schema -->
 {% schema %}
 {
-  "name": "Sticky Cart",
+  "name": "Sticky Add To Cart",
   "target": "body",
   "settings": [
-    { "type": "color", "id": "btn_color", "label": "Button Color", "default": "#000000" }
+    {
+      "type": "header",
+      "content": "🎨 Background Design"
+    },
+    {
+      "type": "select",
+      "id": "bg_theme",
+      "label": "Choose a Theme",
+      "options": [
+        { "value": "none", "label": "Solid Color (Use picker below)" },
+        { "value": "christmas", "label": "🎄 Christmas Stripes" },
+        { "value": "love", "label": "❤️ Valentine Gradient" },
+        { "value": "midnight", "label": "🌑 Midnight Dark" },
+        { "value": "ocean", "label": "🌊 Ocean Breeze" },
+        { "value": "rainbow", "label": "🌈 Rainbow" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Solid Background Color",
+      "default": "#ffffff",
+      "info": "Only used if Theme is set to 'Solid Color'"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image",
+      "label": "Upload Custom Background Pattern"
+    },
+    {
+      "type": "header",
+      "content": "✍️ Text & Button"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Label",
+      "default": "Add to Cart"
+    }
   ]
 }
 {% endschema %}
