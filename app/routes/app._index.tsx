@@ -11,19 +11,15 @@ import {
   Link,
   InlineStack,
   Banner,
-  Badge,
 } from "@shopify/polaris";
 import { TitleBar } from "@shopify/app-bridge-react";
 import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
-// 1. Check Billing Status in the Loader
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session, billing } = await authenticate.admin(request);
-  
-  // This checks if the user has an active subscription to the 'Monthly subscription' plan
   const billingCheck = await billing.check({
     plans: [MONTHLY_PLAN],
-    isTest: true, // Remove this when you go to real production
+    isTest: true,
   });
 
   return json({ 
@@ -33,27 +29,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export default function Index() {
-  // 2. Get the 'isPro' variable
   const { shop, isPro } = useLoaderData<typeof loader>();
   const themeEditorUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
 
   return (
     <Page>
       <TitleBar title="Sticky Cart Dashboard" />
-      
       <BlockStack gap="500">
-        
-        {/* 3. Show a "Thanks" banner if they are Pro */}
         {isPro && (
           <Banner tone="info">
-            <Text as="p" fontWeight="bold">
-              🎉 Thank you for supporting us! You are on the PRO Plan.
-            </Text>
+            <Text as="p" fontWeight="bold">🎉 Thank you for supporting us! You are on the PRO Plan.</Text>
           </Banner>
         )}
-
         <Layout>
-          {/* MAIN SECTION */}
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -62,57 +50,38 @@ export default function Index() {
                   <Banner tone="success">
                     <Text as="p" fontWeight="bold">Active & Running</Text>
                   </Banner>
-                  <Text as="p" variant="bodyMd">
-                    Your Sticky Cart widget is currently enabled.
-                  </Text>
+                  <Text as="p" variant="bodyMd">Your Sticky Cart widget is currently enabled.</Text>
                 </BlockStack>
-                
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">Quick Actions</Text>
                   <InlineStack gap="300">
-                    <Button variant="primary" url={themeEditorUrl} target="_blank">
-                      Open Theme Editor
-                    </Button>
+                    <Button variant="primary" url={themeEditorUrl} target="_blank">Open Theme Editor</Button>
                   </InlineStack>
                 </BlockStack>
               </BlockStack>
             </Card>
           </Layout.Section>
-
-          {/* SIDEBAR SECTION */}
           <Layout.Section variant="oneThird">
             <BlockStack gap="500">
-              
-              {/* BILLING CARD - DYNAMIC */}
               <Card>
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">Your Plan</Text>
-                  
                   {isPro ? (
-                    // IF PRO:
                     <div style={{background: '#fff8e1', padding: '15px', borderRadius: '8px', border: '1px solid #ffe57f', textAlign: 'center'}}>
                       <Text as="h3" variant="headingLg">🏆 PRO TIER</Text>
                       <Text as="p" tone="subdued">All features unlocked</Text>
                     </div>
                   ) : (
-                    // IF FREE:
                     <>
                       <div style={{background: '#e3f2fd', padding: '10px', borderRadius: '5px', color: '#0d47a1', fontWeight: 'bold', textAlign: 'center'}}>
                         FREE TIER
                       </div>
-                      <Text as="p" variant="bodySm">
-                        Upgrade to remove branding and unlock analytics.
-                      </Text>
-                      <Button url="/app/upgrade" fullWidth variant="primary" tone="critical">
-                        Upgrade to Pro ($4.99/mo)
-                      </Button>
+                      <Text as="p" variant="bodySm">Upgrade to remove branding.</Text>
+                      <Button url="/app/upgrade" fullWidth variant="primary" tone="critical">Upgrade to Pro ($4.99/mo)</Button>
                     </>
                   )}
-
                 </BlockStack>
               </Card>
-
-              {/* SUPPORT CARD */}
               <Card>
                 <BlockStack gap="200">
                   <Text as="h2" variant="headingMd">Need Help?</Text>
