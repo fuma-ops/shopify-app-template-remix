@@ -1,3 +1,4 @@
+{% if request.page_type == 'product' and product %}
 <!-- 1. HTML Structure -->
 <div class="sticky-card-container">
   <div class="sticky-content">
@@ -9,31 +10,21 @@
       {% endif %}
       
       <div class="sticky-text-group">
-        {% if product %}
-          <span class="sticky-title">{{ product.title }}</span>
-          <span class="sticky-price">{{ product.price | money }}</span>
-        {% else %}
-          <span class="sticky-title">Example Product Title</span>
-          <span class="sticky-price">$99.99</span>
-        {% endif %}
+        <span class="sticky-title">{{ product.title }}</span>
+        <span class="sticky-price">{{ product.price | money }}</span>
       </div>
     </div>
     
-    <!-- Right Side: Button -->
-    <form method="post" action="/cart/add">
-      {% if product %}
-        <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
-      {% endif %}
-
-      <!-- Buy Now Logic -->
-      {% if block.settings.btn_action == 'checkout' %}
-        <input type="hidden" name="return_to" value="/checkout">
-      {% endif %}
-
-      <button type="submit" class="sticky-btn">
+    <!-- Right Side: Action Area -->
+    <div class="sticky-actions">
+      <!-- Hidden input to hold the specific variant ID -->
+      <input type="hidden" id="sticky-variant-id" value="{{ product.selected_or_first_available_variant.id }}">
+      
+      <button type="button" class="sticky-btn" id="sticky-add-btn">
         {{ block.settings.button_text }}
       </button>
-    </form>
+    </div>
+
   </div>
 </div>
 
@@ -44,11 +35,12 @@
     bottom: 0;
     left: 0;
     width: 100%;
-    z-index: 9999;
+    z-index: 9999; /* High z-index to sit on top of everything */
     padding: 12px 24px;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
     border-top: 1px solid rgba(255,255,255,0.2);
     background-color: {{ block.settings.background_color }};
+    transition: transform 0.3s ease-in-out;
 
     {% if block.settings.bg_theme == 'christmas' %}
       background: repeating-linear-gradient(45deg, #cc0000, #cc0000 10px, #006400 10px, #006400 20px);
@@ -120,17 +112,108 @@
     cursor: pointer;
     font-weight: bold;
     font-size: 14px;
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.2s;
     box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
   
   .sticky-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+    filter: brightness(110%);
+  }
+
+  /* Loading State for Button */
+  .sticky-btn.loading {
+    opacity: 0.7;
+    cursor: wait;
   }
 </style>
 
-<!-- 3. Schema -->
+<!-- 3. Logic & Scripts -->
+<script>
+  (function() {
+    // --- Configuration ---
+    const BTN_ACTION = "{{ block.settings.btn_action }}";
+    const SHOP_DOMAIN = "{{ shop.permanent_domain }}";
+    const API_URL = "https://shopify-app-template-remix-xm46.onrender.com/api/track";
+    
+    // --- Tracking Function ---
+    function trackEvent(eventName) {
+      const formData = new FormData();
+      formData.append("shop", SHOP_DOMAIN);
+      formData.append("event", eventName);
+      
+      // Send tracking data silently (no-cors prevents some errors, but keep standard if your server allows it)
+      fetch(API_URL, { method: "POST", body: formData })
+        .catch(err => console.error("Tracking Error:", err));
+    }
+
+    // --- Main Logic ---
+    document.addEventListener("DOMContentLoaded", () => {
+      
+      // 1. Send View Event immediately
+      trackEvent("view");
+
+      const btn = document.getElementById("sticky-add-btn");
+      const variantInput = document.getElementById("sticky-variant-id");
+
+      if (btn) {
+        btn.addEventListener("click", async (e) => {
+          e.preventDefault();
+          
+          // Track the click
+          trackEvent("click");
+
+          // Visual Feedback (Loading)
+          const originalText = btn.innerText;
+          btn.innerText = "Adding...";
+          btn.classList.add("loading");
+
+          const variantId = variantInput.value;
+
+          // --- CASE 1: Checkout (Buy Now) ---
+          if (BTN_ACTION === 'checkout') {
+            window.location.href = `/cart/${variantId}:1`;
+            return;
+          }
+
+          // --- CASE 2: Add to Cart (AJAX) ---
+          const formData = {
+            'items': [{
+              'id': variantId,
+              'quantity': 1
+            }]
+          };
+
+          try {
+            const response = await fetch(window.Shopify.routes.root + 'cart/add.js', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(formData)
+            });
+
+            if (response.ok) {
+              // Success! Redirect to cart to confirm it worked
+              // (Alternatively, you could just alert("Added!") if you don't want to redirect)
+              window.location.href = "/cart";
+            } else {
+              throw new Error("Shopify API Error");
+            }
+          } catch (error) {
+            console.error("Error adding to cart:", error);
+            btn.innerText = "Error";
+            setTimeout(() => { 
+                btn.innerText = originalText; 
+                btn.classList.remove("loading");
+            }, 2000);
+          }
+        });
+      }
+    });
+  })();
+</script>
+{% endif %}
+
 {% schema %}
 {
   "name": "Sticky Add To Cart",
@@ -210,42 +293,3 @@
   ]
 }
 {% endschema %}
-
-<!-- 4. TRACKING SCRIPT (The Secret Sauce) -->
-<script>
-  (function() {
-    // We use the Shop Domain to identify who gets the analytics
-    const SHOP_DOMAIN = "{{ shop.permanent_domain }}";
-    
-    // IMPORTANT: This points to your deployed Render App
-    const API_URL = "https://shopify-app-template-remix-xm46.onrender.com/api/track";
-
-    function trackEvent(eventName) {
-      const formData = new FormData();
-      formData.append("shop", SHOP_DOMAIN);
-      formData.append("event", eventName);
-
-      // Send data silently in the background
-      fetch(API_URL, {
-        method: "POST",
-        body: formData
-      }).catch(err => console.error("Tracking Error:", err));
-    }
-
-    // 1. Track View (When page loads)
-    window.addEventListener("load", () => {
-      // Only track if we are on a product page
-      if(window.location.pathname.includes('/products/')) {
-        trackEvent("view");
-      }
-    });
-
-    // 2. Track Click (When sticky button is clicked)
-    const btn = document.querySelector(".sticky-btn");
-    if (btn) {
-      btn.addEventListener("click", () => {
-        trackEvent("click");
-      });
-    }
-  })();
-</script>
