@@ -27,3 +27,9 @@ model Session {
   collaborator  Boolean?  @default(false)
   emailVerified Boolean?  @default(false)
 }
+model Analytics {
+  id        Int      @id @default(autoincrement())
+  shop      String
+  event     String   // This will be "view" or "click"
+  createdAt DateTime @default(now())
+}

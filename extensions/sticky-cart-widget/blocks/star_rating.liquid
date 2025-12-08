@@ -25,7 +25,7 @@
         <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
       {% endif %}
 
-      <!-- 👇 THIS IS THE NEW MAGIC FOR "BUY NOW" -->
+      <!-- Buy Now Logic -->
       {% if block.settings.btn_action == 'checkout' %}
         <input type="hidden" name="return_to" value="/checkout">
       {% endif %}
@@ -48,8 +48,6 @@
     padding: 12px 24px;
     box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
     border-top: 1px solid rgba(255,255,255,0.2);
-
-    /* Background Logic */
     background-color: {{ block.settings.background_color }};
 
     {% if block.settings.bg_theme == 'christmas' %}
@@ -161,7 +159,7 @@
       "id": "bg_theme",
       "label": "Choose a Theme",
       "options": [
-        { "value": "none", "label": "Solid Color (Use picker below)" },
+        { "value": "none", "label": "Solid Color" },
         { "value": "christmas", "label": "🎄 Christmas Stripes" },
         { "value": "love", "label": "❤️ Valentine Gradient" },
         { "value": "midnight", "label": "🌑 Midnight Dark" },
@@ -212,3 +210,42 @@
   ]
 }
 {% endschema %}
+
+<!-- 4. TRACKING SCRIPT (The Secret Sauce) -->
+<script>
+  (function() {
+    // We use the Shop Domain to identify who gets the analytics
+    const SHOP_DOMAIN = "{{ shop.permanent_domain }}";
+    
+    // IMPORTANT: This points to your deployed Render App
+    const API_URL = "https://shopify-app-template-remix-xm46.onrender.com/api/track";
+
+    function trackEvent(eventName) {
+      const formData = new FormData();
+      formData.append("shop", SHOP_DOMAIN);
+      formData.append("event", eventName);
+
+      // Send data silently in the background
+      fetch(API_URL, {
+        method: "POST",
+        body: formData
+      }).catch(err => console.error("Tracking Error:", err));
+    }
+
+    // 1. Track View (When page loads)
+    window.addEventListener("load", () => {
+      // Only track if we are on a product page
+      if(window.location.pathname.includes('/products/')) {
+        trackEvent("view");
+      }
+    });
+
+    // 2. Track Click (When sticky button is clicked)
+    const btn = document.querySelector(".sticky-btn");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        trackEvent("click");
+      });
+    }
+  })();
+</script>
