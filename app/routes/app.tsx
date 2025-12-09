@@ -5,14 +5,25 @@ import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 
-import { authenticate } from "../shopify.server";
+import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  await authenticate.admin(request);
 
-  return { apiKey: process.env.SHOPIFY_API_KEY || "" };
+import { authenticate, MONTHLY_PLAN } from "../shopify.server";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // 2. Get billing info from authentication
+  const { billing } = await authenticate.admin(request);
+
+  // 3. FORCE the user to pay. If they haven't, this sends them to the payment page.
+  await billing.require({
+    plans: [MONTHLY_PLAN],
+    isTest: true, // Keep TRUE for review, change to FALSE later
+    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
+  });
+
+  return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
 
 export default function App() {

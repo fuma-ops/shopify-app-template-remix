@@ -1,5 +1,5 @@
 {% comment %} 
-  ⚠️ SAFETY SHIELD: This line ensures the bar ONLY appears on Product Pages. 
+  ⚠️ SAFETY SHIELD: This ensures the bar ONLY appears on Product Pages. 
 {% endcomment %}
 {% if request.page_type == 'product' and product %}
 
@@ -9,21 +9,26 @@
     <!-- Left Side: Product Info -->
     <div class="sticky-product-info">
       {% if product.featured_image %}
-        <img src="{{ product.featured_image | image_url: width: 100 }}" alt="{{ product.title }}" class="sticky-image">
+        <img src="{{ product.featured_image | image_url: width: 100 }}" width="50" height="50" alt="{{ product.title }}" class="sticky-image">
       {% endif %}
+      
       <div class="sticky-text-group">
         <span class="sticky-title">{{ product.title }}</span>
         <span class="sticky-price">{{ product.price | money }}</span>
       </div>
     </div>
     
-    <!-- Right Side: The Add to Cart Form -->
-    <form action="/cart/add" method="post" enctype="multipart/form-data" class="sticky-actions">
-      <!-- 1. Get the correct Variant ID -->
-      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+    <!-- Right Side: Button Form -->
+    <form method="post" action="{{ routes.cart_add_url }}" enctype="multipart/form-data" class="sticky-actions">
       
-      <!-- 2. Redirect to Cart after click -->
-      <input type="hidden" name="return_to" value="/cart">
+      <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+
+      <!-- Logic: Decide where to send the user (Cart vs Checkout) -->
+      {% if block.settings.btn_action == 'checkout' %}
+        <input type="hidden" name="return_to" value="/checkout">
+      {% else %}
+        <input type="hidden" name="return_to" value="/cart">
+      {% endif %}
 
       <button type="submit" class="sticky-btn">
         {{ block.settings.button_text }}
@@ -33,6 +38,7 @@
   </div>
 </div>
 
+<!-- CSS Styles -->
 <style>
   .sticky-card-container {
     position: fixed;
@@ -41,15 +47,28 @@
     width: 100%;
     z-index: 9999;
     padding: 12px 24px;
-    background-color: {{ block.settings.background_color }};
     box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
-    border-top: 1px solid rgba(0,0,0,0.1);
-    
-    /* Optional: Your Gradients */
+    border-top: 1px solid rgba(255,255,255,0.2);
+    background-color: {{ block.settings.background_color }};
+    font-family: {{ block.settings.font_family }}; /* NEW: Font Family */
+
+    /* THEMES */
     {% if block.settings.bg_theme == 'christmas' %}
       background: repeating-linear-gradient(45deg, #cc0000, #cc0000 10px, #006400 10px, #006400 20px);
+    {% elsif block.settings.bg_theme == 'love' %}
+      background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+    {% elsif block.settings.bg_theme == 'midnight' %}
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    {% elsif block.settings.bg_theme == 'rainbow' %}
+      background: linear-gradient(90deg, #ff0000, #ffa500, #ffff00, #008000, #0000ff, #4b0082, #ee82ee);
     {% elsif block.settings.bg_theme == 'ocean' %}
       background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+    {% endif %}
+
+    {% if block.settings.bg_image != blank %}
+      background-image: url('{{ block.settings.bg_image | image_url: width: 2000 }}');
+      background-size: cover;
+      background-position: center;
     {% endif %}
   }
 
@@ -61,17 +80,40 @@
     margin: 0 auto;
   }
 
-  .sticky-product-info { display: flex; align-items: center; gap: 15px; }
-  
-  .sticky-image {
-    width: 50px; height: 50px; object-fit: cover;
-    border-radius: 6px; border: 2px solid #fff;
+  .sticky-product-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
   }
 
-  .sticky-text-group { display: flex; flex-direction: column; line-height: 1.2; }
-  
-  .sticky-title { font-weight: bold; font-size: 14px; color: {{ block.settings.text_color }}; }
-  .sticky-price { font-size: 14px; opacity: 0.9; color: {{ block.settings.text_color }}; }
+  .sticky-image {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
+
+  .sticky-text-group {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+  }
+
+  .sticky-title {
+    font-weight: bold;
+    /* NEW: Custom Font Size */
+    font-size: {{ block.settings.title_font_size }}px; 
+    color: {{ block.settings.text_color }};
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1); 
+  }
+
+  .sticky-price {
+    font-size: 14px;
+    color: {{ block.settings.text_color }};
+    opacity: 0.9;
+  }
 
   .sticky-btn {
     background-color: {{ block.settings.button_color }};
@@ -81,48 +123,163 @@
     border-radius: 50px;
     cursor: pointer;
     font-weight: bold;
-    font-size: 14px;
+    /* NEW: Custom Button Font Size */
+    font-size: {{ block.settings.btn_font_size }}px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
-  .sticky-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  
+  .sticky-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0,0,0,0.2);
+  }
 </style>
 
+<!-- TRACKING SCRIPT -->
 <script>
   (function() {
-    // Analytics Tracking
-    const API_URL = "https://shopify-app-template-remix-xm46.onrender.com/api/track";
     const SHOP_DOMAIN = "{{ shop.permanent_domain }}";
+    const API_URL = "https://zsolutions-sticky-cart.onrender.com/api/track";
 
-    function track(event) {
+    function trackEvent(eventName) {
+      const formData = new FormData();
+      formData.append("shop", SHOP_DOMAIN);
+      formData.append("event", eventName);
+
       fetch(API_URL, {
         method: "POST",
-        body: new URLSearchParams({ shop: SHOP_DOMAIN, event: event })
-      }).catch(e => console.log(e));
+        body: formData
+      }).catch(err => console.error("Tracking Error:", err));
     }
-    
-    window.addEventListener("load", () => track("view"));
+
+    window.addEventListener("load", () => {
+      trackEvent("view");
+    });
+
     const btn = document.querySelector(".sticky-btn");
-    if(btn) btn.addEventListener("click", () => track("click"));
+    if (btn) {
+      btn.addEventListener("click", () => {
+        trackEvent("click");
+      });
+    }
   })();
 </script>
+
+{% endif %}
+{% comment %} ⚠️ END OF SHIELD {% endcomment %}
 
 {% schema %}
 {
   "name": "Sticky Add To Cart",
   "target": "body",
   "settings": [
-    { "type": "text", "id": "button_text", "label": "Button Label", "default": "Add to Cart" },
-    { "type": "select", "id": "bg_theme", "label": "Theme", "options": [
+    {
+      "type": "header",
+      "content": "⚡ Button Function"
+    },
+    {
+      "type": "select",
+      "id": "btn_action",
+      "label": "Button Action",
+      "options": [
+        { "value": "cart", "label": "Add to Cart (Standard)" },
+        { "value": "checkout", "label": "Buy Now (Skip Cart) 🚀" }
+      ],
+      "default": "cart"
+    },
+    {
+      "type": "header",
+      "content": "🔤 Typography"
+    },
+    {
+      "type": "select",
+      "id": "font_family",
+      "label": "Font Style",
+      "options": [
+        { "value": "inherit", "label": "Use Theme Font (Recommended)" },
+        { "value": "'Helvetica Neue', Helvetica, Arial, sans-serif", "label": "Modern Sans" },
+        { "value": "'Georgia', serif", "label": "Classic Serif" },
+        { "value": "'Courier New', monospace", "label": "Tech Monospace" }
+      ],
+      "default": "inherit"
+    },
+    {
+      "type": "range",
+      "id": "title_font_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Product Title Size",
+      "default": 14
+    },
+    {
+      "type": "range",
+      "id": "btn_font_size",
+      "min": 12,
+      "max": 20,
+      "step": 1,
+      "unit": "px",
+      "label": "Button Text Size",
+      "default": 14
+    },
+    {
+      "type": "header",
+      "content": "🎨 Background Design"
+    },
+    {
+      "type": "select",
+      "id": "bg_theme",
+      "label": "Choose a Theme",
+      "options": [
         { "value": "none", "label": "Solid Color" },
-        { "value": "christmas", "label": "Christmas" },
-        { "value": "ocean", "label": "Ocean" }
-      ], "default": "none" },
-    { "type": "color", "id": "background_color", "label": "Background Color", "default": "#ffffff" },
-    { "type": "color", "id": "text_color", "label": "Text Color", "default": "#000000" },
-    { "type": "color", "id": "button_color", "label": "Button Color", "default": "#000000" },
-    { "type": "color", "id": "button_text_color", "label": "Button Text Color", "default": "#ffffff" }
+        { "value": "christmas", "label": "🎄 Christmas Stripes" },
+        { "value": "love", "label": "❤️ Valentine Gradient" },
+        { "value": "midnight", "label": "🌑 Midnight Dark" },
+        { "value": "ocean", "label": "🌊 Ocean Breeze" },
+        { "value": "rainbow", "label": "🌈 Rainbow" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Solid Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "image_picker",
+      "id": "bg_image",
+      "label": "Upload Custom Background Pattern"
+    },
+    {
+      "type": "header",
+      "content": "✍️ Text & Button Colors"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_color",
+      "label": "Button Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "button_text_color",
+      "label": "Button Text Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "text",
+      "id": "button_text",
+      "label": "Button Label",
+      "default": "Add to Cart"
+    }
   ]
 }
 {% endschema %}
-
-{% endif %} 
-{% comment %} ⚠️ END SHIELD {% endcomment %}
