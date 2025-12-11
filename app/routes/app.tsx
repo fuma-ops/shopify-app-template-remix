@@ -1,3 +1,4 @@
+import { json } from "@remix-run/node";
 import type { HeadersFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { Link, Outlet, useLoaderData, useRouteError } from "@remix-run/react";
 import { boundary } from "@shopify/shopify-app-remix/server";
@@ -9,17 +10,15 @@ import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
-
-import { authenticate, MONTHLY_PLAN } from "../shopify.server";
-
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // 2. Get billing info from authentication
+  // 1. Authenticate
   const { billing } = await authenticate.admin(request);
 
-  // 3. FORCE the user to pay. If they haven't, this sends them to the payment page.
+  // 2. CHECK if they have the plan. 
+  // Since we removed the config in server.ts, we simply check for the Plan Handle.
   await billing.require({
     plans: [MONTHLY_PLAN],
-    isTest: true, // Keep TRUE for review, change to FALSE later
+    isTest: true, // Keep TRUE for review
     onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
   });
 
@@ -31,13 +30,14 @@ export default function App() {
 
   return (
     <AppProvider isEmbeddedApp apiKey={apiKey}>
-      
+      <NavMenu>
+        <Link to="/app" rel="home">Home</Link>
+      </NavMenu>
       <Outlet />
     </AppProvider>
   );
 }
 
-// Shopify needs Remix to catch some thrown responses, so that their headers are included in the response.
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }
