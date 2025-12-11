@@ -8,20 +8,23 @@ import prisma from "../db.server";
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { session } = await authenticate.admin(request);
   
-  // Fetch Analytics safely
+  // Fetch Analytics
   const views = await prisma.analytics.count({ where: { shop: session.shop, event: "view" } });
   const clicks = await prisma.analytics.count({ where: { shop: session.shop, event: "click" } });
   const ctr = views > 0 ? ((clicks / views) * 100).toFixed(1) : "0";
 
   return json({ 
-    shop: session.shop,
+    shop: session.shop, // This is 'example.myshopify.com'
     stats: { views, clicks, ctr }
   });
 };
 
 export default function Index() {
   const { shop, stats } = useLoaderData<typeof loader>();
-  const shopName = shop.replace(".myshopify.com", "");
+
+  // ⚡ THE FIX: Use the universal admin link format
+  // Shopify will automatically redirect this to the correct admin.shopify.com page
+  const editorUrl = `https://${shop}/admin/themes/current/editor?context=apps&template=product`;
 
   return (
     <Page title="Sticky Cart Dashboard">
@@ -75,13 +78,16 @@ export default function Index() {
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">Quick Actions</Text>
                   <InlineGrid gap="300">
+                    
+                    {/* The Fixed Button */}
                     <Button 
                       variant="primary" 
-                      url={`https://admin.shopify.com/store/${shopName}/online_store/themes/current/editor?context=apps`} 
+                      url={editorUrl} 
                       target="_blank"
                     >
                       Open Theme Editor
                     </Button>
+
                   </InlineGrid>
                 </BlockStack>
               </BlockStack>
