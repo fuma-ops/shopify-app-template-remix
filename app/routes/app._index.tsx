@@ -40,7 +40,7 @@ export default function Index() {
                   <InlineGrid gap="300">
                     <Button 
                       variant="primary" 
-                      url={`https://admin.shopify.com/store/${shopName}/editor?context=apps`} 
+                     url={`https://admin.shopify.com/store/${shopName}/online_store/themes/current/editor?context=apps`} 
                       target="_blank"
                     >
                       Open Theme Editor
