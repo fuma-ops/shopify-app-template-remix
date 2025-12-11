@@ -1,23 +1,15 @@
-import { type LoaderFunctionArgs, redirect } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { billing } = await authenticate.admin(request);
-
-  // 1. Calculate the exact URL of your codespace dynamically
-  const { protocol, host } = new URL(request.url);
-  const returnUrl = `${protocol}//${host}/app`;
-
-  // 2. Check/Request the Billing
+  
+  // This redirects the user to the Shopify Payment Page for your $4.99 Plan
   await billing.require({
     plans: [MONTHLY_PLAN],
-    onFailure: async () =>
-      billing.request({
-        plan: MONTHLY_PLAN, // This now matches your server code
-        isTest: true,
-        returnUrl: returnUrl,
-      }),
+    onFailure: async () => billing.request({ plan: MONTHLY_PLAN }),
   });
 
-  return redirect("/app");
+  // If they already have the plan, just go back to the dashboard
+  return null;
 };
