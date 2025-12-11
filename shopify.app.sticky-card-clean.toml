@@ -2,7 +2,8 @@
 
 client_id = "e288cde8e5f3bc8c1df3a04075454b16"
 name = "sticky card clean"
-application_url = "https://shopify-app-template-remix-xm46.onrender.com"
+handle = "sticky-card-clean"
+application_url = "https://zsolutions-sticky-cart.onrender.com"
 embedded = true
 
 [build]
@@ -20,12 +21,12 @@ api_version = "2024-10"
   uri = "/webhooks/app/uninstalled"
 
 [access_scopes]
+# learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 
 [auth]
 redirect_urls = [
-  "https://shopify-app-template-remix-xm46.onrender.com/auth/callback",
-  "https://shopify-app-template-remix-xm46.onrender.com/auth/shopify/callback",
-  "https://shopify-app-template-remix-xm46.onrender.com/api/auth/callback",
-  "https://shopify-app-template-remix-xm46.onrender.com/app/upgrade"
+  "https://zsolutions-sticky-cart.onrender.com/auth/callback",
+  "https://zsolutions-sticky-cart.onrender.com/auth/shopify/callback",
+  "https://zsolutions-sticky-cart.onrender.com/api/auth/callback"
 ]
