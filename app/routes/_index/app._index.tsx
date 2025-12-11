@@ -1,87 +1,27 @@
-import { type LoaderFunctionArgs, json } from "@remix-run/node";
+import { Page, Layout, Card, Text, BlockStack, Button, InlineGrid, Banner } from "@shopify/polaris";
+import { authenticate } from "../shopify.server";
 import { useLoaderData } from "@remix-run/react";
-import {
-  Page,
-  Layout,
-  Text,
-  Card,
-  Button,
-  BlockStack,
-  List,
-  Link,
-  InlineStack,
-  Banner,
-  Grid,
-} from "@shopify/polaris";
-import { TitleBar } from "@shopify/app-bridge-react";
-import { authenticate, MONTHLY_PLAN } from "../shopify.server";
+import { json } from "@remix-run/node";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const { session, billing } = await authenticate.admin(request);
-  const billingCheck = await billing.check({
-    plans: [MONTHLY_PLAN],
-    isTest: true,
-  });
-
-  return json({ 
-    shop: session.shop,
-    isPro: billingCheck.hasActivePayment 
-  });
+  // 1. Get the session from the server
+  const { session } = await authenticate.admin(request);
+  
+  // 2. Send the shop URL to the frontend safely
+  return json({ shop: session.shop });
 };
 
 export default function Index() {
-  const { shop, isPro } = useLoaderData<typeof loader>();
-  const themeEditorUrl = `https://${shop}/admin/themes/current/editor?context=apps`;
+  const { shop } = useLoaderData<typeof loader>();
+  
+  // Clean the shop URL to get just the name (e.g., "my-store")
+  const shopName = shop.replace(".myshopify.com", "");
 
   return (
-    <Page>
-      <TitleBar title="Sticky Cart Dashboard" />
+    <Page title="Sticky Cart Dashboard">
       <BlockStack gap="500">
-        
-        {/* PRO Banner */}
-        {isPro && (
-          <Banner tone="info">
-            <Text as="p" fontWeight="bold">🎉 Thank you for supporting us! You are on the PRO Plan.</Text>
-          </Banner>
-        )}
-
-        {/* ANALYTICS SECTION (Only for PRO) */}
-        {isPro && (
-          <Card>
-             <BlockStack gap="400">
-                <Text as="h2" variant="headingMd">🚀 Pro Analytics (Last 30 Days)</Text>
-                <Grid>
-                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
-                       <Card background="bg-surface-secondary">
-                          <Text as="h3" variant="headingSm" tone="subdued">Total Views</Text>
-                          <Text as="p" variant="headingxl">1,234</Text>
-                       </Card>
-                    </Grid.Cell>
-                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
-                       <Card background="bg-surface-secondary">
-                          <Text as="h3" variant="headingSm" tone="subdued">Clicks</Text>
-                          <Text as="p" variant="headingxl">856</Text>
-                       </Card>
-                    </Grid.Cell>
-                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
-                       <Card background="bg-surface-secondary">
-                          <Text as="h3" variant="headingSm" tone="subdued">CTR</Text>
-                          <Text as="p" variant="headingxl" tone="success">69%</Text>
-                       </Card>
-                    </Grid.Cell>
-                    <Grid.Cell columnSpan={{xs: 6, sm: 3, md: 3, lg: 3, xl: 3}}>
-                       <Card background="bg-surface-secondary">
-                          <Text as="h3" variant="headingSm" tone="subdued">Conversions</Text>
-                          <Text as="p" variant="headingxl">142</Text>
-                       </Card>
-                    </Grid.Cell>
-                </Grid>
-             </BlockStack>
-          </Card>
-        )}
-
         <Layout>
-          {/* Main App Controls */}
           <Layout.Section>
             <Card>
               <BlockStack gap="500">
@@ -90,50 +30,25 @@ export default function Index() {
                   <Banner tone="success">
                     <Text as="p" fontWeight="bold">Active & Running</Text>
                   </Banner>
-                  <Text as="p" variant="bodyMd">Your Sticky Cart widget is currently enabled.</Text>
+                  <Text as="p" variant="bodyMd">
+                    Your Sticky Cart widget is currently enabled on your storefront.
+                  </Text>
                 </BlockStack>
                 <BlockStack gap="200">
                   <Text as="h3" variant="headingSm">Quick Actions</Text>
-                  <InlineStack gap="300">
-                    <Button variant="primary" url={themeEditorUrl} target="_blank">Open Theme Editor</Button>
-                  </InlineStack>
+                  <InlineGrid gap="300">
+                    {/* Safe Link generated on the server */}
+                    <Button 
+                      variant="primary" 
+                      url={`https://admin.shopify.com/store/${shopName}/editor?context=apps`} 
+                      target="_blank"
+                    >
+                      Open Theme Editor
+                    </Button>
+                  </InlineGrid>
                 </BlockStack>
               </BlockStack>
             </Card>
-          </Layout.Section>
-
-          {/* Sidebar */}
-          <Layout.Section variant="oneThird">
-            <BlockStack gap="500">
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">Your Plan</Text>
-                  {isPro ? (
-                    <div style={{background: '#fff8e1', padding: '15px', borderRadius: '8px', border: '1px solid #ffe57f', textAlign: 'center'}}>
-                      <Text as="h3" variant="headingLg">🏆 PRO TIER</Text>
-                      <Text as="p" tone="subdued">All features unlocked</Text>
-                    </div>
-                  ) : (
-                    <>
-                      <div style={{background: '#e3f2fd', padding: '10px', borderRadius: '5px', color: '#0d47a1', fontWeight: 'bold', textAlign: 'center'}}>
-                        FREE TIER
-                      </div>
-                      <Text as="p" variant="bodySm">Upgrade to remove branding & see analytics.</Text>
-                      <Button url="/app/upgrade" fullWidth variant="primary" tone="critical">Upgrade to Pro ($4.99/mo)</Button>
-                    </>
-                  )}
-                </BlockStack>
-              </Card>
-              <Card>
-                <BlockStack gap="200">
-                  <Text as="h2" variant="headingMd">Need Help?</Text>
-                  <List>
-                    <List.Item><Link url="mailto:support@zsolutions.ma">Contact Support</Link></List.Item>
-                    <List.Item><Link url="#">Read Setup Guide</Link></List.Item>
-                  </List>
-                </BlockStack>
-              </Card>
-            </BlockStack>
           </Layout.Section>
         </Layout>
       </BlockStack>
