@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "e288cde8e5f3bc8c1df3a04075454b16"
-name = "sticky card clean"
+name = "Sticky Cart - Quick Buy"
 handle = "sticky-card-clean"
 application_url = "https://zsolutions-sticky-cart.onrender.com"
 embedded = true
@@ -13,15 +13,14 @@ automatically_update_urls_on_dev = true
 api_version = "2024-10"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
-
-  [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
 
+  [[webhooks.subscriptions]]
+  topics = [ "app/scopes_update" ]
+  uri = "/webhooks/app/scopes_update"
+
 [access_scopes]
-# learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
 scopes = "write_products"
 
 [auth]
@@ -30,3 +29,9 @@ redirect_urls = [
   "https://zsolutions-sticky-cart.onrender.com/auth/shopify/callback",
   "https://zsolutions-sticky-cart.onrender.com/api/auth/callback"
 ]
+
+# 👇 THIS IS THE PART YOU WERE MISSING
+[webhooks.privacy_compliance]
+customer_data_request_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
+customer_redaction_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
+shop_redaction_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
