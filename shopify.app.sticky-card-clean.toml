@@ -12,6 +12,7 @@ automatically_update_urls_on_dev = true
 [webhooks]
 api_version = "2024-10"
 
+  # 1. Existing App Webhooks
   [[webhooks.subscriptions]]
   topics = [ "app/uninstalled" ]
   uri = "/webhooks/app/uninstalled"
@@ -19,6 +20,11 @@ api_version = "2024-10"
   [[webhooks.subscriptions]]
   topics = [ "app/scopes_update" ]
   uri = "/webhooks/app/scopes_update"
+
+  # 2. NEW COMPLIANCE WEBHOOKS (The method from your screenshot)
+  [[webhooks.subscriptions]]
+  compliance_topics = [ "customers/data_request", "customers/redact", "shop/redact" ]
+  uri = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
 
 [access_scopes]
 scopes = "write_products"
@@ -29,9 +35,3 @@ redirect_urls = [
   "https://zsolutions-sticky-cart.onrender.com/auth/shopify/callback",
   "https://zsolutions-sticky-cart.onrender.com/api/auth/callback"
 ]
-
-# 👇 THIS IS THE PART YOU WERE MISSING
-[webhooks.privacy_compliance]
-customer_data_request_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
-customer_redaction_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"
-shop_redaction_url = "https://zsolutions-sticky-cart.onrender.com/webhooks/compliance"

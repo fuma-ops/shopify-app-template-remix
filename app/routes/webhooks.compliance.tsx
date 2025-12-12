@@ -1,13 +1,21 @@
 import { json } from "@remix-run/node";
+import { authenticate } from "../shopify.server"; // Import the security tool
 
-// 1. Handle POST requests (This is for Shopify's Robot)
-export const action = async () => {
-  console.log("POST request received from Shopify");
-  return json({ success: true }, { status: 200 });
-};
+export const action = async ({ request }: { request: Request }) => {
+  try {
+    // 🔒 HMAC CHECK
+    // This line verifies the signature using your Client Secret.
+    // If the signature is INVALID (like the Robot's test), 
+    // this function AUTOMATICALLY throws a 401 Unauthorized response.
+    await authenticate.webhook(request);
 
-// 2. Handle GET requests (This is for YOU to test in the browser)
-export const loader = async () => {
-  console.log("GET request received from Browser");
-  return json({ success: true, message: "Compliance Webhook is Working!" }, { status: 200 });
+    // If we get here, the signature was valid. Return 200.
+    console.log("Webhook verified and processed");
+    return json({ success: true }, { status: 200 });
+
+  } catch (error) {
+    // If authenticate.webhook fails, it throws a Response.
+    // We let Remix handle that response (which will be the 401 Shopify wants).
+    throw error;
+  }
 };
