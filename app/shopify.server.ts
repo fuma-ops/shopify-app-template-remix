@@ -2,12 +2,13 @@ import "@shopify/shopify-app-remix/adapters/node";
 import {
   ApiVersion,
   AppDistribution,
+  BillingInterval,
   shopifyApp,
 } from "@shopify/shopify-app-remix/server";
 import { PrismaSessionStorage } from "@shopify/shopify-app-session-storage-prisma";
 import prisma from "./db.server";
 
-// Keep this matching your Dashboard Handle exactly
+// Ensure this matches your Shopify Dashboard plan handle exactly
 export const MONTHLY_PLAN = 'monthly-subscription';
 
 const shopify = shopifyApp({
@@ -19,9 +20,16 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
-
-  // ❌ DELETED THE BILLING BLOCK HERE
-  // We removed it because the Shopify Dashboard now manages the price.
+  
+  // ✅ WE PUT THIS BACK TO FIX THE CRASH
+  billing: {
+    [MONTHLY_PLAN]: {
+      amount: 4.99,
+      currencyCode: 'USD',
+      interval: BillingInterval.Every30Days,
+      test: true, // Keep true for Reviewer
+    },
+  },
 
   future: {
     unstable_newEmbeddedAuthStrategy: true,
