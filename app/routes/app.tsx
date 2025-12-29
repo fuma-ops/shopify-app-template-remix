@@ -10,12 +10,14 @@ import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
+  // 1. Authenticate the user
   const { billing } = await authenticate.admin(request);
 
-  // 💰 BILLING CHECK: This stops the user if they haven't paid.
+  // 2. CHECK BILLING (This is the part you were missing!)
+  // This tells the app: "If they haven't paid, send them to the payment screen."
   await billing.require({
     plans: [MONTHLY_PLAN],
-    isTest: true, // Keep this TRUE for the reviewer to test for free
+    isTest: true, // Keep true for the reviewer
     onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
   });
 
