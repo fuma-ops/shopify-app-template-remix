@@ -161,123 +161,47 @@
       });
     }
   })();
-</script>
-
-{% endif %}
-{% comment %} ⚠️ END OF SHIELD {% endcomment %}
-
-{% schema %}
-{
-  "name": "Sticky Add To Cart",
-  "target": "body",
-  "settings": [
-    {
-      "type": "header",
-      "content": "⚡ Button Function"
-    },
-    {
-      "type": "select",
-      "id": "btn_action",
-      "label": "Button Action",
-      "options": [
-        { "value": "cart", "label": "Add to Cart (Standard)" },
-        { "value": "checkout", "label": "Buy Now (Skip Cart) 🚀" }
-      ],
-      "default": "cart"
-    },
-    {
-      "type": "header",
-      "content": "🔤 Typography"
-    },
-    {
-      "type": "select",
-      "id": "font_family",
-      "label": "Font Style",
-      "options": [
-        { "value": "inherit", "label": "Use Theme Font (Recommended)" },
-        { "value": "'Helvetica Neue', Helvetica, Arial, sans-serif", "label": "Modern Sans" },
-        { "value": "'Georgia', serif", "label": "Classic Serif" },
-        { "value": "'Courier New', monospace", "label": "Tech Monospace" }
-      ],
-      "default": "inherit"
-    },
-    {
-      "type": "range",
-      "id": "title_font_size",
-      "min": 12,
-      "max": 24,
-      "step": 1,
-      "unit": "px",
-      "label": "Product Title Size",
-      "default": 14
-    },
-    {
-      "type": "range",
-      "id": "btn_font_size",
-      "min": 12,
-      "max": 20,
-      "step": 1,
-      "unit": "px",
-      "label": "Button Text Size",
-      "default": 14
-    },
-    {
-      "type": "header",
-      "content": "🎨 Background Design"
-    },
-    {
-      "type": "select",
-      "id": "bg_theme",
-      "label": "Choose a Theme",
-      "options": [
-        { "value": "none", "label": "Solid Color" },
-        { "value": "christmas", "label": "🎄 Christmas Stripes" },
-        { "value": "love", "label": "❤️ Valentine Gradient" },
-        { "value": "midnight", "label": "🌑 Midnight Dark" },
-        { "value": "ocean", "label": "🌊 Ocean Breeze" },
-        { "value": "rainbow", "label": "🌈 Rainbow" }
-      ],
-      "default": "none"
-    },
-    {
-      "type": "color",
-      "id": "background_color",
-      "label": "Solid Background Color",
-      "default": "#ffffff"
-    },
-    {
-      "type": "image_picker",
-      "id": "bg_image",
-      "label": "Upload Custom Background Pattern"
-    },
-    {
-      "type": "header",
-      "content": "✍️ Text & Button Colors"
-    },
-    {
-      "type": "color",
-      "id": "text_color",
-      "label": "Text Color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "button_color",
-      "label": "Button Color",
-      "default": "#000000"
-    },
-    {
-      "type": "color",
-      "id": "button_text_color",
-      "label": "Button Text Color",
-      "default": "#ffffff"
-    },
-    {
-      "type": "text",
-      "id": "button_text",
-      "label": "Button Label",
-      "default": "Add to Cart"
+<!-- TRACKING SCRIPT -->
+<script>
+  (function() {
+    // 🛑 1. STOP if we are in the Theme Editor (Design Mode)
+    // This prevents "Fake Views" when you are just changing settings.
+    if (window.Shopify && window.Shopify.designMode) {
+      console.log("Sticky Cart: Analytics disabled in Editor");
+      return;
     }
-  ]
-}
-{% endschema %}
+
+    const SHOP_DOMAIN = "{{ shop.permanent_domain }}";
+    const API_URL = "https://zsolutions-sticky-cart.onrender.com/api/track";
+
+    // 🛑 2. Session Storage Check (Prevent duplicates on reload)
+    // We only count a view if we haven't counted it in this session yet.
+    const sessionKey = `sticky_viewed_${window.location.pathname}`;
+
+    function trackEvent(eventName) {
+      const formData = new FormData();
+      formData.append("shop", SHOP_DOMAIN);
+      formData.append("event", eventName);
+
+      fetch(API_URL, {
+        method: "POST",
+        body: formData
+      }).catch(err => console.error("Tracking Error:", err));
+    }
+
+    window.addEventListener("load", () => {
+      // Check if we already tracked this page view
+      if (!sessionStorage.getItem(sessionKey)) {
+        trackEvent("view");
+        sessionStorage.setItem(sessionKey, "true"); // Mark as viewed
+      }
+    });
+
+    const btn = document.querySelector(".sticky-btn");
+    if (btn) {
+      btn.addEventListener("click", () => {
+        trackEvent("click");
+      });
+    }
+  })();
+</script>

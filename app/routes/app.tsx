@@ -5,15 +5,20 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { authenticate } from "../shopify.server";
+import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // 1. Authenticate (Secure the app)
-  await authenticate.admin(request);
+  const { billing } = await authenticate.admin(request);
 
-  // 2. Return API key (No billing check here to avoid conflict)
+  // 💰 BILLING CHECK: This stops the user if they haven't paid.
+  await billing.require({
+    plans: [MONTHLY_PLAN],
+    isTest: true, // Keep this TRUE for the reviewer to test for free
+    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
+  });
+
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
 
@@ -30,7 +35,6 @@ export default function App() {
   );
 }
 
-// Standard Error Boundary and Headers
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }
