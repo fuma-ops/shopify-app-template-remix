@@ -5,21 +5,14 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { authenticate, MONTHLY_PLAN } from "../shopify.server";
+import { authenticate } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // 1. Authenticate the user
-  const { billing } = await authenticate.admin(request);
-
-  // 2. CHECK BILLING (This is the part you were missing!)
-  // This tells the app: "If they haven't paid, send them to the payment screen."
-  await billing.require({
-    plans: [MONTHLY_PLAN],
-    isTest: true, // Keep true for the reviewer
-    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
-  });
+  // 1. Authenticate ONLY. 
+  // Do NOT check billing here. Shopify handles the charge before install.
+  await authenticate.admin(request);
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
