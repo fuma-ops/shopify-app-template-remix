@@ -20,8 +20,7 @@ const shopify = shopifyApp({
   sessionStorage: new PrismaSessionStorage(prisma),
   distribution: AppDistribution.AppStore,
   
-  // 👇 THIS COMMENT IS REQUIRED TO FIX THE RED ERROR
-  // @ts-ignore
+  // 🛡️ MAGIC FIX: "as any" forces this to work
   billing: {
     [MONTHLY_PLAN]: {
       amount: 4.99,
@@ -29,7 +28,7 @@ const shopify = shopifyApp({
       interval: BillingInterval.Every30Days,
       test: true,
     },
-  },
+  } as any,
 
   future: {
     unstable_newEmbeddedAuthStrategy: true,

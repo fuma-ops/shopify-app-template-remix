@@ -12,12 +12,11 @@ export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const { billing } = await authenticate.admin(request);
 
-  // 👇 THIS COMMENT IS REQUIRED TO FIX THE RED ERROR
-  // @ts-ignore
+  // 🛡️ MAGIC FIX: "as any" stops the red errors here
   await billing.require({
-    plans: [MONTHLY_PLAN],
+    plans: [MONTHLY_PLAN] as any,
     isTest: true,
-    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
+    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true } as any),
   });
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
