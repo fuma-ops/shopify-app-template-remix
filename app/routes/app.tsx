@@ -5,14 +5,20 @@ import { boundary } from "@shopify/shopify-app-remix/server";
 import { AppProvider } from "@shopify/shopify-app-remix/react";
 import { NavMenu } from "@shopify/app-bridge-react";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
-import { authenticate } from "../shopify.server";
+import { authenticate, MONTHLY_PLAN } from "../shopify.server";
 
 export const links = () => [{ rel: "stylesheet", href: polarisStyles }];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  // 1. Authenticate ONLY. 
-  // Do NOT check billing here. Shopify handles the charge before install.
-  await authenticate.admin(request);
+  const { billing } = await authenticate.admin(request);
+
+  // 👇 THIS COMMENT IS REQUIRED TO FIX THE RED ERROR
+  // @ts-ignore
+  await billing.require({
+    plans: [MONTHLY_PLAN],
+    isTest: true,
+    onFailure: async () => billing.request({ plan: MONTHLY_PLAN, isTest: true }),
+  });
 
   return json({ apiKey: process.env.SHOPIFY_API_KEY || "" });
 };
